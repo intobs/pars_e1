@@ -4,9 +4,30 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import sqlite3
+import time
 
-write_to_base = "on"
-#write_to_base = "off"
+#замеряем время работы скрипта
+class Profiler(object):
+    def __enter__(self):
+        self._startTime = time.time()
+
+    def __exit__(self, type, value, traceback):
+        sec=time.time() - self._startTime
+        h = ((sec // 3600)) % 24
+        m = (sec // 60) % 60
+        s = sec % 60
+
+        print('Время выполнения скрипта: %d:%02d:%02d' % (h, m, s))
+
+
+#write_to_base = "on"
+write_to_base = "off"
+
+no_pars =[
+    'http://www.e1.ru/news/daily/2014/05/11/list-section_id-160.html',  #Кончита
+    'http://www.e1.ru/news/daily/2014/05/11/list-section_id-1.html'     #Кончита
+
+    ]
 
 conn = sqlite3.connect('pars.sqlite')
 c = conn.cursor()
@@ -121,7 +142,10 @@ def get_link_page(id_theme):
                 date_public_news = y +'-'+ m1 +'-'+ d1
                 news_url_page = 'http://www.e1.ru/news/daily/%s/%s/%s/list-section_id-%s.html' % (y, m1, d1, id_theme)
                 print(news_url_page)
-                pars_link_on_page(news_url_page, id_theme, date_public_news)
+                if news_url_page in no_pars:
+                    print('bad news')
+                else:
+                    pars_link_on_page(news_url_page, id_theme, date_public_news)
 
 #функция запуска парсинга
 def PARS(id_theme):
@@ -130,17 +154,15 @@ def PARS(id_theme):
 #PARS(37)
 
 def pars_all_theme():
-    '''
+    
     PARS(37)    # технологии и интернет
     PARS(73)    # автоновости
     PARS(158)   # бизнес
     PARS(15)    # в верхах
-    '''
     PARS(96)    # вкусно сегодня
     PARS(105)   # город
     PARS(143)   # дом
     PARS(157)   # дороги
-    '''
     PARS(168)   # дорожное видео
     PARS(9)     # здоровье
     PARS(147)   # интервью
@@ -169,9 +191,9 @@ def pars_all_theme():
     PARS(161)   # эксклюзив
     PARS(148)   # эксперимент
     PARS(181)   # фоторепортаж
-    '''
 
-pars_all_theme()   #Азтунг! Не запускать просто так! парсится 4695 новостей, около 2х часов!
+with Profiler() as p:
+    pars_all_theme()   #Азтунг! Не запускать просто так! парсится 53 000 новостей, около 6 часов!
 
 ### ---------- TESTS/trash ---------- ###
 #get_data_pars_news_page("http://www.e1.ru/news/spool/news_id-452348-section_id-37.html")
